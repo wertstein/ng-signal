@@ -5,6 +5,11 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import {
+  toObservable,
+  toSignal,
+  takeUntilDestroyed,
+} from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
@@ -13,6 +18,7 @@ import { SwapiService } from '../services/swapi.service';
 import { Ship } from '../interfaces';
 import { FormsModule } from '@angular/forms';
 import { ShipDetailsComponent } from './ship-details.component';
+import { debounceTime, filter } from 'rxjs';
 
 @Component({
   selector: 'ng-signal-ship-list',
@@ -36,20 +42,31 @@ export class ShipListComponent {
 
   readonly ships = signal<Ship[]>([]);
 
+  readonly searchString$ = toObservable(this.searchString);
+
+  readonly criteria$ = this.searchString$.pipe(
+    filter((v) => v.length >= 3),
+    debounceTime(500)
+  );
+
+  readonly criteria = toSignal(this.criteria$, { initialValue: 'wing' });
+
   constructor() {
     effect(() => {
-      this.search();
+      this.searchPromise();
     });
   }
 
-  search() {
-    this.swapiService
-      .getShips(this.searchString())
-      .subscribe((ships) => this.ships.set(ships));
-  }
+  // search() {
+  //   this.swapiService
+  //     .getShips(this.searchString())
+  //     .subscribe((ships) => this.ships.set(ships));
+  // }
 
   async searchPromise() {
-    const ships = await this.swapiService.getShipsPromise(this.searchString());
+    const searchString = this.criteria();
+
+    const ships = await this.swapiService.getShipsPromise(searchString);
 
     this.ships.set(ships);
   }
