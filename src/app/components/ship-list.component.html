@@ -1,0 +1,27 @@
+<mat-form-field class="example-full-width">
+  <mat-label>Search</mat-label>
+  <input
+    matInput
+    placeholder="Name"
+    [ngModel]="searchString()"
+    (ngModelChange)="searchString.set($event)"
+  />
+</mat-form-field>
+
+<button mat-raised-button color="primary" (click)="searchPromise()">
+  Search
+</button>
+
+<button
+  mat-raised-button
+  color="secondary"
+  [disabled]="!ships().length"
+  (click)="upgrade()"
+>
+  Upgrade
+</button>
+
+<ng-signal-ship-details
+  *ngFor="let ship of ships()"
+  [ship]="ship"
+></ng-signal-ship-details>
